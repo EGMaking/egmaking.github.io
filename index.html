@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>存匣 · 文件索引</title>
+<meta name="description" content="随仓库发布的只读文件库：浏览、搜索与下载。上传与管理只在 admin.html。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231F5C46'/%3E%3Cpath d='M9 10h14v3H9zM9 15h14v3H9zM9 20h9v3H9z' fill='%23FBFBF8'/%3E%3C/svg%3E">
+<style>
+:root{
+  --paper:#EDEFEA; --surface:#FBFBF8; --ink:#161D19; --ink-2:#5C665F; --ink-3:#8C948D;
+  --line:#D6DAD2; --line-2:#C3C9BF; --pine:#1F5C46; --pine-2:#2C7457; --pine-soft:#E3EDE7;
+  --brick:#A03B24;
+  --mono:ui-monospace,"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+  --sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans SC",-apple-system,"Segoe UI",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+h1,h2,h3,p,dl,dd,dt{margin:0}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit;font-size:inherit;color:inherit;cursor:pointer}
+input,select{font-family:inherit;font-size:16px;color:var(--ink)}
+::selection{background:var(--pine);color:#fff}
+:focus-visible{outline:2px solid var(--pine);outline-offset:2px}
+[hidden]{display:none !important}
+.wrap{width:100%;max-width:1120px;margin:0 auto;padding:0 18px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+
+/* 顶栏 */
+.topbar{position:sticky;top:0;z-index:30;background:var(--paper);border-bottom:1px solid var(--line-2)}
+.topbar-in{display:flex;align-items:center;justify-content:space-between;gap:8px;height:60px}
+.brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-mark{width:26px;height:26px;background:var(--pine);position:relative;flex:none}
+.brand-mark::before,.brand-mark::after{content:"";position:absolute;left:5px;right:5px;height:2px;background:#FBFBF8}
+.brand-mark::before{top:8px}
+.brand-mark::after{top:15px;right:9px}
+.brand-txt{display:flex;flex-direction:column;line-height:1.2}
+.brand-txt strong{font-size:17px;font-weight:700;letter-spacing:-0.01em}
+.brand-txt em{display:none;font-style:normal;font-size:11px;color:var(--ink-3);letter-spacing:.08em}
+.nav{display:flex;align-items:center;gap:6px}
+.nav-item{font-size:13.5px;color:var(--ink-2);padding:8px 6px;border-bottom:2px solid transparent;white-space:nowrap}
+.nav-item.is-on{color:var(--pine);border-bottom-color:var(--pine);font-weight:600}
+.nav-item:hover{color:var(--ink)}
+.ro-tag{display:none;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);border:1px solid var(--line-2);padding:2px 6px;letter-spacing:.04em}
+@media(min-width:520px){.ro-tag{display:inline-block}}
+@media(min-width:720px){.brand-txt em{display:block}.nav-item{font-size:14px;padding:8px 10px}.nav{gap:4px}}
+
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 16px;min-height:42px;border-radius:2px;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);font-size:14px;font-weight:600;transition:background .15s,border-color .15s}
+.btn:hover{border-color:var(--ink-3)}
+.btn-primary{background:var(--pine);border-color:var(--pine);color:#fff}
+.btn-primary:hover{background:var(--pine-2);border-color:var(--pine-2)}
+.btn-sm{min-height:34px;padding:6px 12px;font-size:13px}
+.mini{padding:5px 9px;min-height:32px;border:1px solid var(--line);background:transparent;border-radius:2px;font-size:13px;color:var(--ink-2)}
+.mini:hover{border-color:var(--ink-3);color:var(--ink)}
+
+/* Hero */
+.kicker{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;color:var(--pine);letter-spacing:.02em}
+.kicker::before{content:"";width:7px;height:7px;background:var(--pine);flex:none}
+.hero{display:grid;gap:28px;padding:38px 18px 44px;border-bottom:1px solid var(--line-2)}
+.hero h1{font-size:clamp(30px,6.6vw,50px);line-height:1.09;letter-spacing:-0.025em;font-weight:800;margin:14px 0 0}
+.hero h1 span{display:block}
+.lede{margin-top:16px;color:var(--ink-2);font-size:15px;line-height:1.75;max-width:36em}
+.lede b{color:var(--ink);font-weight:600}
+.index-card{border-top:2px solid var(--ink);background:transparent;align-self:start;width:100%}
+.index-card div{display:flex;align-items:baseline;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.index-card dt{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.index-card dd{font-family:var(--mono);font-size:24px;font-weight:600;line-height:1.2;text-align:right}
+.index-card dd.small{font-size:13px;font-weight:400;color:var(--ink-2)}
+@media(min-width:900px){
+  .hero{grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:56px;align-items:center;padding:56px 18px 60px}
+  .index-card{padding-left:8px}
+}
+
+/* 文件库 */
+.library{padding:30px 18px 56px}
+.lib-head{display:flex;flex-direction:column;gap:14px}
+.lib-title{display:flex;align-items:baseline;gap:10px}
+.lib-title h2{font-size:22px;font-weight:700;letter-spacing:-0.01em}
+.count{font-family:var(--mono);font-size:12px;color:var(--ink-3)}
+.lib-tools{display:flex;flex-wrap:wrap;gap:8px}
+.search{flex:1 1 200px;min-width:0;min-height:42px;padding:9px 12px;border:1px solid var(--line);background:var(--surface);border-radius:2px}
+.search:focus{outline:none;border-color:var(--pine)}
+.search::placeholder{color:var(--ink-3)}
+.select{min-height:42px;padding:8px 10px;border:1px solid var(--line);background:var(--surface);border-radius:2px;color:var(--ink-2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.chip{padding:6px 11px;border:1px solid var(--line);background:transparent;font-size:13px;color:var(--ink-2);border-radius:2px;min-height:34px}
+.chip:hover{border-color:var(--line-2);color:var(--ink)}
+.chip.is-on{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip .n{font-family:var(--mono);font-size:11px;opacity:.6;margin-left:4px}
+@media(min-width:760px){
+  .lib-head{flex-direction:row;align-items:flex-end;justify-content:space-between}
+  .lib-tools{flex:0 1 400px;justify-content:flex-end}
+}
+
+.file-list{margin-top:14px;border-top:1px solid var(--line)}
+.file-row{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;padding:16px 0;border-bottom:1px solid var(--line)}
+.badge{width:44px;height:44px;border:1px solid var(--line-2);display:flex;align-items:center;justify-content:center;background:var(--surface);font-family:var(--mono);font-size:11px;color:var(--pine);letter-spacing:.02em;position:relative;overflow:hidden}
+.badge::after{content:"";position:absolute;right:0;top:0;border-width:0 10px 10px 0;border-style:solid;border-color:transparent var(--paper) transparent transparent}
+.badge b{font-weight:600}
+.file-main{min-width:0}
+.file-name{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font-size:16px;font-weight:600;line-height:1.4;color:var(--ink);word-break:break-word}
+.file-name:hover{color:var(--pine);text-decoration:underline;text-underline-offset:3px}
+.file-desc{margin-top:3px;font-size:13px;color:var(--ink-2);line-height:1.6}
+.file-meta{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11.5px;color:var(--ink-3);word-break:break-all}
+.file-actions{grid-column:2;display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+@media(min-width:760px){
+  .file-row{grid-template-columns:52px minmax(0,1fr) auto;align-items:center;gap:18px;padding:18px 0}
+  .badge{width:52px;height:52px;font-size:12px}
+  .file-actions{grid-column:auto;margin-top:0;flex-wrap:nowrap}
+}
+.empty,.notice{border:1px dashed var(--line-2);padding:40px 22px;text-align:center;margin-top:18px}
+.notice{text-align:left;padding:16px 18px;background:#F6F3EA;border-color:#E0D8C2}
+.empty h3{font-size:17px;font-weight:700}
+.empty p,.notice p{color:var(--ink-2);font-size:13.5px;margin-top:6px;line-height:1.7}
+.empty .btn{margin-top:16px}
+
+/* 页脚 */
+.footer{border-top:1px solid var(--line-2);padding:24px 0 40px}
+.footer-in{display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--ink-3);line-height:1.7}
+.footer-in .mono{color:var(--ink-2)}
+@media(min-width:760px){.footer-in{flex-direction:row;justify-content:space-between;gap:30px}}
+
+/* 模态 */
+.modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop{position:absolute;inset:0;background:rgba(18,24,20,.55)}
+.modal-card{position:relative;background:var(--surface);border:1px solid var(--line-2);border-top:4px solid var(--pine);width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:auto;padding:22px}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.modal-head h3{font-size:19px;font-weight:700;line-height:1.35;word-break:break-word}
+.modal-x{background:none;border:0;font-size:22px;line-height:1;color:var(--ink-3);padding:2px 6px;min-width:36px;min-height:36px}
+.modal-x:hover{color:var(--ink)}
+.modal-text{font-size:14px;color:var(--ink-2);margin-top:8px;line-height:1.7}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.detail-grid dt{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+.detail-grid dd{font-family:var(--mono);font-size:13px;word-break:break-all}
+.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:#F3F5F0;font-size:13.5px;padding:10px 16px;z-index:120;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100vw - 32px);text-align:center;border-radius:2px}
+.toast.is-on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <a class="brand" href="index.html">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <span class="brand-txt"><strong>存匣</strong><em>只读文件库</em></span>
+    </a>
+    <nav class="nav">
+      <span class="ro-tag">READ ONLY</span>
+      <a class="nav-item is-on" href="index.html">文件索引</a>
+      <a class="nav-item" href="admin.html">管理入口</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <div class="hero-copy">
+      <p class="kicker">GitHub Pages 托管 · 随仓库发布</p>
+      <h1><span>文件已经在仓库里，</span><span>取用只需一次点击。</span></h1>
+      <p class="lede">这里陈列随仓库一同发布的文件。任何人都能浏览、搜索与下载，但<b>不能上传、修改或删除</b>——写操作只存在于 <b>admin.html</b>，并且需要仓库 Token 才能真正提交。</p>
+    </div>
+    <dl class="index-card" aria-label="文件库概况">
+      <div><dt>文件数</dt><dd id="statCount">—</dd></div>
+      <div><dt>总容量</dt><dd id="statSize">—</dd></div>
+      <div><dt>最近更新</dt><dd class="small" id="statDate">—</dd></div>
+      <div><dt>写入权限</dt><dd class="small">仅 admin.html</dd></div>
+    </dl>
+  </section>
+
+  <section class="library wrap">
+    <div class="lib-head">
+      <div class="lib-title">
+        <h2>文件索引</h2>
+        <span class="count" id="libCount">读取中</span>
+      </div>
+      <div class="lib-tools">
+        <input class="search" id="libSearch" type="search" placeholder="搜索文件名、路径或说明" aria-label="搜索文件">
+        <select class="select" id="libSort" aria-label="排序">
+          <option value="new">最近更新</option>
+          <option value="name">按名称</option>
+          <option value="size">按大小</option>
+          <option value="path">按目录</option>
+        </select>
+      </div>
+    </div>
+    <div class="chips" id="libChips"></div>
+    <div class="file-list" id="libList"></div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-in">
+    <span>本页只读：没有上传、编辑或删除入口。文件随仓库发布，更新由管理员在 admin.html 提交后生效。</span>
+    <span class="mono" id="footMeta">清单更新 —</span>
+  </div>
+</footer>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-backdrop" data-act="close"></div>
+  <div class="modal-card" id="modalCard" role="dialog" aria-modal="true"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function () {
+'use strict';
+
+/* ---------- 兜底清单：file:// 本地预览或 files.json 读取失败时使用 ---------- */
+var FALLBACK = {
+  "site": "存匣 · 文件托管",
+  "updated": "2026-11-06T07:48:01+08:00",
+  "files": [
+    {"name":"仓库使用说明.md","path":"files/guide.md","size":1527,"type":"markdown","updated":"2026-11-06","desc":"站点结构、上传与部署说明，建议先读。"},
+    {"name":"季度订单示例.csv","path":"files/sample-orders.csv","size":135,"type":"csv","updated":"2026-10-31","desc":"四个月的订单量、成交金额与退款单数，可直接导入表格软件。"},
+    {"name":"配色与字号参考.txt","path":"files/palette.txt","size":172,"type":"text","updated":"2026-10-28","desc":"站点配色、字重与编号字体的取样记录。"}
+  ]
+};
+
+var CAT_LABEL = { doc:'文档', sheet:'表格', image:'图像', audio:'音频', video:'视频', archive:'压缩包', other:'其他' };
+var CAT_ORDER = ['doc','sheet','image','video','audio','archive','other'];
+var IMG_EXT = ['png','jpg','jpeg','gif','webp','svg','bmp','avif'];
+var DOC_EXT = ['pdf','doc','docx','md','markdown','txt','rtf','ppt','pptx','key','pages'];
+var SHEET_EXT = ['csv','xls','xlsx','numbers'];
+var AUDIO_EXT = ['mp3','wav','flac','aac','ogg','m4a'];
+var VIDEO_EXT = ['mp4','mov','mkv','avi','webm'];
+var ARCHIVE_EXT = ['zip','rar','7z','tar','gz'];
+
+var manifest = FALLBACK;
+var files = [];
+var query = '', cat = 'all', sort = 'new';
+var loadFailed = false;
+var toastTimer = null;
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+function fmtSize(n) {
+  n = Number(n) || 0;
+  if (n < 1024) return n + ' B';
+  var u = ['KB','MB','GB'], i = -1, v = n;
+  do { v /= 1024; i++; } while (v >= 1024 && i < u.length - 1);
+  return (v >= 100 ? Math.round(v) : v.toFixed(v >= 10 ? 1 : 2)) + ' ' + u[i];
+}
+function extOf(name) {
+  var i = String(name || '').lastIndexOf('.');
+  return i > 0 ? String(name).slice(i + 1).toLowerCase() : '';
+}
+function catOf(f) {
+  var t = String(f.type || '').toLowerCase(), e = extOf(f.name);
+  if (IMG_EXT.indexOf(e) > -1) return 'image';
+  if (VIDEO_EXT.indexOf(e) > -1) return 'video';
+  if (AUDIO_EXT.indexOf(e) > -1) return 'audio';
+  if (SHEET_EXT.indexOf(e) > -1) return 'sheet';
+  if (DOC_EXT.indexOf(e) > -1) return 'doc';
+  if (ARCHIVE_EXT.indexOf(e) > -1) return 'archive';
+  if (t === 'markdown' || t === 'text' || t.indexOf('text/') === 0) return 'doc';
+  return 'other';
+}
+function badgeText(f) {
+  var e = extOf(f.name);
+  if (e === 'markdown') return 'MD';
+  if (e === 'jpeg') return 'JPG';
+  return e ? e.slice(0, 4).toUpperCase() : 'FILE';
+}
+function fileUrl(path) {
+  try { return new URL(encodeURI(path), location.href).href; } catch (e) { return path; }
+}
+function repoInfo() {
+  var m = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
+  if (!m) return null;
+  var seg = location.pathname.split('/').filter(Boolean);
+  return { owner: m[1], repo: seg[0] || (m[1] + '.github.io') };
+}
+function ghLink(path) {
+  var r = repoInfo();
+  if (!r) return '';
+  return 'https://github.com/' + r.owner + '/' + r.repo + '/blob/HEAD/' + encodeURI(path).replace(/#/g, '%23');
+}
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('is-on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function () { t.classList.remove('is-on'); }, 2400);
+}
+
+/* ---------- 数据 ---------- */
+function normalize(f) {
+  return {
+    name: f.name || (f.path || '').split('/').pop() || '未命名文件',
+    path: f.path || '',
+    size: Number(f.size) || 0,
+    type: f.type || '',
+    updated: f.updated || '',
+    desc: f.desc || ''
+  };
+}
+function loadManifest() {
+  var done = function (data, failed) {
+    if (data && Array.isArray(data.files)) {
+      manifest = data;
+      files = data.files.map(normalize);
+    } else {
+      manifest = FALLBACK;
+      files = FALLBACK.files.map(normalize);
+      loadFailed = true;
+    }
+    if (failed) loadFailed = true;
+    render();
+  };
+  if (!('fetch' in window)) { done(FALLBACK, true); return; }
+  fetch('files.json', { cache: 'no-store' })
+    .then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    })
+    .then(function (data) { done(data, false); })
+    .catch(function () { done(FALLBACK, true); });
+}
+
+/* ---------- 渲染 ---------- */
+function filterSort() {
+  var q = query.trim().toLowerCase();
+  var list = files.filter(function (f) {
+    if (cat !== 'all' && catOf(f) !== cat) return false;
+    if (!q) return true;
+    return (f.name + ' ' + f.path + ' ' + f.desc).toLowerCase().indexOf(q) > -1;
+  });
+  list.sort(function (a, b) {
+    if (sort === 'name') return a.name.localeCompare(b.name, 'zh-Hans-CN');
+    if (sort === 'size') return b.size - a.size;
+    if (sort === 'path') return a.path.localeCompare(b.path);
+    return String(b.updated).localeCompare(String(a.updated));
+  });
+  return list;
+}
+function renderChips() {
+  var html = '<button class="chip' + (cat === 'all' ? ' is-on' : '') + '" data-act="cat" data-cat="all">全部<span class="n">' + files.length + '</span></button>';
+  CAT_ORDER.forEach(function (c) {
+    var n = files.filter(function (f) { return catOf(f) === c; }).length;
+    if (!n && cat !== c) return;
+    html += '<button class="chip' + (cat === c ? ' is-on' : '') + '" data-act="cat" data-cat="' + c + '">' + CAT_LABEL[c] + '<span class="n">' + n + '</span></button>';
+  });
+  document.getElementById('libChips').innerHTML = html;
+}
+function rowHTML(f) {
+  return '<article class="file-row">' +
+    '<div class="badge" aria-hidden="true"><b>' + esc(badgeText(f)) + '</b></div>' +
+    '<div class="file-main">' +
+    '<button class="file-name" data-act="open" data-path="' + esc(f.path) + '">' + esc(f.name) + '</button>' +
+    (f.desc ? '<p class="file-desc">' + esc(f.desc) + '</p>' : '') +
+    '<div class="file-meta mono">' +
+    '<span>' + esc(f.path) + '</span>' +
+    '<span>' + fmtSize(f.size) + '</span>' +
+    '<span>' + esc(f.updated || '—') + '</span>' +
+    '</div></div>' +
+    '<div class="file-actions">' +
+    '<button class="btn btn-primary btn-sm" data-act="dl" data-path="' + esc(f.path) + '">下载</button>' +
+    '<button class="mini" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>' +
+    '</div></article>';
+}
+function render() {
+  var byPath = {};
+  files.forEach(function (f) { byPath[f.path] = f; });
+  var list = filterSort();
+  document.getElementById('libCount').textContent = (loadFailed ? files.length + ' 个文件（离线清单）' : files.length + ' 个文件');
+  renderChips();
+  document.getElementById('libList').innerHTML = list.length
+    ? list.map(rowHTML).join('')
+    : '<div class="empty"><h3>' + (files.length ? '没有匹配的文件' : '索引里还没有文件') + '</h3><p>' +
+      (files.length ? '换个关键词，或把筛选切回全部。' : '管理员在 admin.html 上传后，文件与清单会一起提交进仓库，这里就会显示。') +
+      '</p></div>';
+
+  var total = files.reduce(function (s, f) { return s + f.size; }, 0);
+  var latest = files.map(function (f) { return f.updated || ''; }).sort().pop() || '—';
+  document.getElementById('statCount').textContent = files.length;
+  document.getElementById('statSize').textContent = fmtSize(total);
+  document.getElementById('statDate').textContent = latest;
+  document.getElementById('footMeta').textContent = '清单更新 ' + (manifest.updated ? String(manifest.updated).replace('T', ' ').slice(0, 16) : '—');
+  if (loadFailed) {
+    document.getElementById('libList').insertAdjacentHTML('beforebegin',
+      '<div class="notice"><p><strong>当前读取的是页面内置清单。</strong> 本地双击打开或 files.json 尚未发布时会出现这种情况；部署到 GitHub Pages 后会自动读取仓库里的 files.json。</p></div>');
+  }
+}
+
+/* ---------- 操作 ---------- */
+function find(path) {
+  for (var i = 0; i < files.length; i++) if (files[i].path === path) return files[i];
+  return null;
+}
+function download(f) {
+  if (!f) return;
+  var url = fileUrl(f.path);
+  fetch(url, { cache: 'no-store' }).then(function (res) {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.blob();
+  }).then(function (blob) {
+    var obj = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = obj;
+    a.download = f.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(obj); }, 6000);
+    toast('开始下载：' + f.name);
+  }).catch(function () {
+    window.open(url, '_blank', 'noopener');
+  });
+}
+function copyLink(f) {
+  if (!f) return;
+  var link = fileUrl(f.path);
+  var done = function () { toast('链接已复制'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(link).then(done).catch(function () { fallbackCopy(link, done); });
+  } else {
+    fallbackCopy(link, done);
+  }
+}
+function fallbackCopy(text, done) {
+  try {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    done();
+  } catch (e) { toast('复制失败，请手动复制：' + text); }
+}
+function openDetail(path) {
+  var f = find(path);
+  if (!f) return;
+  var gh = ghLink(f.path);
+  var modal = document.getElementById('modal');
+  document.getElementById('modalCard').innerHTML =
+    '<div class="modal-head"><h3>' + esc(f.name) + '</h3>' +
+    '<button class="modal-x" data-act="close" aria-label="关闭">×</button></div>' +
+    (f.desc ? '<p class="modal-text">' + esc(f.desc) + '</p>' : '') +
+    '<dl class="detail-grid">' +
+    '<div><dt>路径</dt><dd>' + esc(f.path) + '</dd></div>' +
+    '<div><dt>大小</dt><dd>' + fmtSize(f.size) + '</dd></div>' +
+    '<div><dt>类型</dt><dd>' + CAT_LABEL[catOf(f)] + ' · ' + esc(badgeText(f)) + '</dd></div>' +
+    '<div><dt>更新</dt><dd>' + esc(f.updated || '—') + '</dd></div>' +
+    '</dl>' +
+    '<div class="modal-foot">' +
+    (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">在 GitHub 查看</a>' : '') +
+    '<button class="btn" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>' +
+    '<button class="btn btn-primary" data-act="dl" data-path="' + esc(f.path) + '">下载文件</button>' +
+    '</div>';
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+}
+function closeModal() {
+  document.getElementById('modal').hidden = true;
+  document.body.style.overflow = '';
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-act]');
+  if (!el) return;
+  if (el.tagName === 'A') return;
+  var act = el.getAttribute('data-act');
+  var path = el.getAttribute('data-path');
+  if (act === 'cat') { cat = el.getAttribute('data-cat'); render(); return; }
+  if (act === 'open') { openDetail(path); return; }
+  if (act === 'dl') { download(find(path)); return; }
+  if (act === 'link') { copyLink(find(path)); return; }
+  if (act === 'close') { closeModal(); return; }
+});
+document.getElementById('libSearch').addEventListener('input', function (e) {
+  query = e.target.value;
+  render();
+});
+document.getElementById('libSort').addEventListener('change', function (e) {
+  sort = e.target.value;
+  render();
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape' && !document.getElementById('modal').hidden) closeModal();
+});
+
+loadManifest();
+})();
+</script>
+</body>
+</html>

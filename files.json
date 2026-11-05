@@ -1,0 +1,30 @@
+{
+  "site": "存匣 · 文件托管",
+  "updated": "2026-11-06T07:48:01+08:00",
+  "files": [
+    {
+      "name": "仓库使用说明.md",
+      "path": "files/guide.md",
+      "size": 1527,
+      "type": "markdown",
+      "updated": "2026-11-06",
+      "desc": "站点结构、上传与部署说明，建议先读。"
+    },
+    {
+      "name": "季度订单示例.csv",
+      "path": "files/sample-orders.csv",
+      "size": 135,
+      "type": "csv",
+      "updated": "2026-10-31",
+      "desc": "四个月的订单量、成交金额与退款单数，可直接导入表格软件。"
+    },
+    {
+      "name": "配色与字号参考.txt",
+      "path": "files/palette.txt",
+      "size": 172,
+      "type": "text",
+      "updated": "2026-10-28",
+      "desc": "站点配色、字重与编号字体的取样记录。"
+    }
+  ]
+}
