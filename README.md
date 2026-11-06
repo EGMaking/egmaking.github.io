@@ -1,13 +1,14 @@
 # 存匣 · GitHub 文件托管站
 
-一个纯静态、可直接部署到 GitHub Pages 的文件站：访客页只读，管理页负责上传与删除。
+纯静态、可直接部署到 GitHub Pages 的文件站：访客页只读，管理页负责上传、删除与权限设置。
 
 ```
-index.html     访客页：浏览 / 搜索 / 下载，没有任何写操作
-admin.html     管理页：登录后上传、下载、删除
-files.json     文件清单（两个页面都读它）
-files/         文件实际存放目录
-.nojekyll      关闭 Jekyll，按原样发布
+index.html         访客页：浏览 / 搜索 / 下载，没有上传、修改、删除入口
+admin.html         管理页：登录后上传、下载、删除、设下载密码
+files.json         文件清单（两个页面都读它；下载密码以哈希存在条目里）
+files/             文件实际存放目录
+vault-config.json  管理员密码的加盐哈希
+.nojekyll          关闭 Jekyll，按原样发布
 ```
 
 ## 部署
@@ -20,32 +21,33 @@ files/         文件实际存放目录
 
 ## 两个页面的分工
 
-- `index.html`：只读取 `files.json`，渲染列表、搜索、筛选、下载、复制直链。源码里没有任何上传或删除逻辑。
-- `admin.html`：账号密码通过后，用 GitHub Contents API 把文件 commit 到 `files/`，同时更新 `files.json`；删除同理。
+- `index.html`：只读取 `files.json`，渲染、搜索、筛选、下载。源码里不存在上传或删除逻辑。页面每 60 秒、以及重新回到前台时自动重读清单并绕过缓存，管理员提交的文件在 Pages 发布完成后会自动出现在列表里。
+- `admin.html`：账号密码通过后，用 GitHub Contents API 把文件 commit 到 `files/`、更新 `files.json`、删除文件、为单个文件设置下载密码。
 
-## 管理员登录
+## 管理员登录与密码
 
-- 账号 `admin`
-- 密码 `123456`
+- 默认账号 `admin`，默认密码 `123456`。
+- 登录后可在「管理员密码」面板修改：新密码以 **SHA-256 加盐哈希** 写进仓库根目录 `vault-config.json`，换设备、换浏览器都生效（Pages 重新发布约 1 分钟）。没配置仓库时只存在本机。
+- 登录只是前端门禁：能挡住误操作，但代码是公开的，不能当成真正的账号体系。
 
-登录只是前端门禁（密码写在 `admin.html` 源码里），只能挡住误操作，不等于真实鉴权。真正的写入权限由 GitHub Token 控制。
+## 仓库连接与 Token
 
-## 上传需要配置什么
+- 在「仓库连接」填所有者、仓库名、分支，粘贴 Fine-grained Token（权限 `Contents: Read and write`）。
+- Token 保存后写入本机 `localStorage`，下次打开自动带出；「清除已存 Token」可随时移除。Token 不写入仓库，也不随页面发布。
+- 修改仓库信息或 Token 会自动保存；点「保存并连接」会验证仓库并同步清单。
 
-在 `admin.html` 的「仓库连接」里填：
+## 单个文件的下载密码
 
-| 字段 | 说明 |
-| --- | --- |
-| 所有者 | GitHub 用户名 |
-| 仓库名 | 仓库名 |
-| 分支 | 一般为 `main` |
-| Token | Fine-grained token，需 `Contents: Read and write` |
+- 文件清单里点某行的「设密码」，输入至少 6 位密码并保存，会写进 `files.json`（只存加盐哈希，不存明文）。
+- 访客在 `index.html` 点下载会弹出密码框，校验通过才开始下载；受保护文件不提供「复制链接」。
+- 点「改密码」可换密码，弹窗里「取消保护」可恢复公开。
 
-Token 生成路径：GitHub → Settings → Developer settings → Personal access tokens → Fine-grained tokens。仓库配置存在 localStorage，Token 只存在当前会话的 sessionStorage，不会写入文件。
+**必须知道的边界**：这是纯静态站，密码校验发生在浏览器里，文件本身仍在 `files/` 下有直链。知道确切路径的人可以绕过密码直接打开文件。它挡的是正常访客，不是安全边界。要真正防止直链访问，只能上后端（PHP/Node 等），GitHub Pages 做不到。
 
 ## 几点限制
 
-- 上传与删除都会产生 commit，GitHub Pages 需要约 1 分钟重新发布，页面刷新后才看到新文件。
-- 仓库若设为 Private，`index.html` 无法公开读取 `files.json`，需要公开仓库（或改为带 Token 访问）。
-- 大文件受浏览器与 GitHub API 限制，页面把单文件上限设为 20 MB；GitHub 单文件硬上限为 100 MB。
-- 想要真正的登录鉴权与权限隔离，需要后端服务；纯静态站点做不到。
+- 上传不限前端大小，但 GitHub 单文件硬上限 **100 MB**，仓库建议总量控制在 1 GB 内；超出会被 API 拒绝。
+- 上传、删除、改密码都会产生 commit，GitHub Pages 约 1 分钟重新发布后才对外生效；访客页随后在一个轮询周期内自动同步。
+- 仓库若设为 Private，`index.html` 无法公开读取 `files.json`，需使用公开仓库。
+- `vault-config.json` 与 `files.json` 都是公开文件，哈希可被读取；请勿把重要机密放进本站。
+- 真正的服务端鉴权、访问日志、限速需要后端，纯静态站点不具备。

@@ -135,6 +135,12 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 .detail-grid dt{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
 .detail-grid dd{font-family:var(--mono);font-size:13px;word-break:break-all}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}
+.pass-field{margin-top:14px}
+.pass-field label{display:block;font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-bottom:6px}
+.pass-field input{width:100%;padding:10px 12px;border:1px solid var(--line);background:#fff;border-radius:2px;min-height:44px}
+.pass-field input:focus{outline:none;border-color:var(--pine)}
+.pass-err{color:var(--brick);font-size:13px;min-height:20px;margin-top:8px}
+.lock-tag{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--brick);border:1px solid #E0C7BE;padding:0 4px;line-height:1.6}
 
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:#F3F5F0;font-size:13.5px;padding:10px 16px;z-index:120;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100vw - 32px);text-align:center;border-radius:2px}
 .toast.is-on{opacity:1;transform:translate(-50%,0)}
@@ -236,6 +242,8 @@ var files = [];
 var query = '', cat = 'all', sort = 'new';
 var loadFailed = false;
 var toastTimer = null;
+var lastSig = '';
+var loadingManifest = false;
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -300,11 +308,21 @@ function normalize(f) {
     size: Number(f.size) || 0,
     type: f.type || '',
     updated: f.updated || '',
-    desc: f.desc || ''
+    desc: f.desc || '',
+    lock: f.lock && f.lock.hash ? { algo: f.lock.algo || 'sha256', salt: f.lock.salt || '', hash: String(f.lock.hash).toLowerCase() } : null
   };
 }
-function loadManifest() {
-  var done = function (data, failed) {
+function manifestSig(list) {
+  return String(manifest.updated || '') + '|' + list.map(function (f) {
+    return f.path + ':' + f.size + ':' + f.updated + ':' + (f.lock ? f.lock.hash : '');
+  }).join(',');
+}
+function loadManifest(silent) {
+  if (loadingManifest) return;
+  loadingManifest = true;
+  var finish = function (data, failed) {
+    loadingManifest = false;
+    if (failed && silent && files.length) return;
     if (data && Array.isArray(data.files)) {
       manifest = data;
       files = data.files.map(normalize);
@@ -314,16 +332,31 @@ function loadManifest() {
       loadFailed = true;
     }
     if (failed) loadFailed = true;
+    var sig = manifestSig(files);
+    if (!silent) {
+      lastSig = sig;
+    } else if (sig !== lastSig) {
+      lastSig = sig;
+      toast('文件清单已更新');
+    }
     render();
   };
-  if (!('fetch' in window)) { done(FALLBACK, true); return; }
-  fetch('files.json', { cache: 'no-store' })
+  if (!('fetch' in window)) { finish(FALLBACK, true); return; }
+  fetch('files.json?v=' + Date.now(), { cache: 'no-store' })
     .then(function (res) {
       if (!res.ok) throw new Error('HTTP ' + res.status);
       return res.json();
     })
-    .then(function (data) { done(data, false); })
-    .catch(function () { done(FALLBACK, true); });
+    .then(function (data) { finish(data, false); })
+    .catch(function () { finish(FALLBACK, true); });
+}
+function startAutoSync() {
+  var refresh = function () { loadManifest(true); };
+  setInterval(refresh, 60000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refresh();
+  });
+  window.addEventListener('focus', refresh);
 }
 
 /* ---------- 渲染 ---------- */
@@ -361,10 +394,11 @@ function rowHTML(f) {
     '<span>' + esc(f.path) + '</span>' +
     '<span>' + fmtSize(f.size) + '</span>' +
     '<span>' + esc(f.updated || '—') + '</span>' +
+    (f.lock ? '<span class="lock-tag">需密码</span>' : '') +
     '</div></div>' +
     '<div class="file-actions">' +
     '<button class="btn btn-primary btn-sm" data-act="dl" data-path="' + esc(f.path) + '">下载</button>' +
-    '<button class="mini" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>' +
+    (f.lock ? '' : '<button class="mini" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>') +
     '</div></article>';
 }
 function render() {
@@ -389,6 +423,105 @@ function render() {
     document.getElementById('libList').insertAdjacentHTML('beforebegin',
       '<div class="notice"><p><strong>当前读取的是页面内置清单。</strong> 本地双击打开或 files.json 尚未发布时会出现这种情况；部署到 GitHub Pages 后会自动读取仓库里的 files.json。</p></div>');
   }
+}
+
+
+/* ---------- SHA-256（用于本地校验下载密码，不依赖 crypto.subtle） ---------- */
+function sha256Hex(input) {
+  var K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var bytes = [];
+  var str = unescape(encodeURIComponent(String(input)));
+  for (var i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i));
+  var bitLen = str.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  var hi = Math.floor(bitLen / 4294967296), lo = bitLen % 4294967296;
+  bytes.push((hi >>> 24) & 255, (hi >>> 16) & 255, (hi >>> 8) & 255, hi & 255);
+  bytes.push((lo >>> 24) & 255, (lo >>> 16) & 255, (lo >>> 8) & 255, lo & 255);
+  function rr(x, n) { return (x >>> n) | (x << (32 - n)); }
+  for (var off = 0; off < bytes.length; off += 64) {
+    var w = new Array(64);
+    for (i = 0; i < 16; i++) {
+      w[i] = (bytes[off + i * 4] << 24) | (bytes[off + i * 4 + 1] << 16) |
+             (bytes[off + i * 4 + 2] << 8) | bytes[off + i * 4 + 3];
+    }
+    for (i = 16; i < 64; i++) {
+      var x = w[i - 15], y = w[i - 2];
+      var s0 = rr(x, 7) ^ rr(x, 18) ^ (x >>> 3);
+      var s1 = rr(y, 17) ^ rr(y, 19) ^ (y >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25);
+      var ch = (e & f) ^ ((~e) & g);
+      var t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+      var S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22);
+      var maj = (a & b) ^ (a & c) ^ (b & c);
+      var t2 = (S0 + maj) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0;
+      d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0;
+    H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0;
+    H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  var out = '';
+  for (i = 0; i < 8; i++) out += ('00000000' + H[i].toString(16)).slice(-8);
+  return out;
+}
+function pwdDigest(pass, salt) { return sha256Hex(salt + ':' + pass); }
+
+/* ---------- 下载密码门禁 ---------- */
+function requestDownload(f) {
+  if (!f) return;
+  if (f.lock && f.lock.hash) { openPassGate(f); return; }
+  download(f);
+}
+function openPassGate(f) {
+  var modal = document.getElementById('modal');
+  document.getElementById('modalCard').innerHTML =
+    '<div class="modal-head"><h3>该文件受密码保护</h3>' +
+    '<button class="modal-x" data-act="close" aria-label="关闭">×</button></div>' +
+    '<p class="modal-text">输入密码后开始下载「' + esc(f.name) + '」。</p>' +
+    '<div class="pass-field"><label for="passInput">下载密码</label>' +
+    '<input id="passInput" type="password" autocomplete="off" placeholder="输入管理员设置的密码"></div>' +
+    '<p class="pass-err" id="passErr" role="alert"></p>' +
+    '<div class="modal-foot">' +
+    '<button class="btn" data-act="close">取消</button>' +
+    '<button class="btn btn-primary" data-act="pass-ok" data-path="' + esc(f.path) + '">输入密码并下载</button>' +
+    '</div>';
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  var input = document.getElementById('passInput');
+  setTimeout(function () { input.focus(); }, 60);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); tryPass(f); }
+  });
+}
+function tryPass(f) {
+  var input = document.getElementById('passInput');
+  var err = document.getElementById('passErr');
+  var v = input.value.trim();
+  if (!v) { err.textContent = '请输入密码'; return; }
+  if (pwdDigest(v, f.lock.salt) !== String(f.lock.hash).toLowerCase()) {
+    err.textContent = '密码不正确，请重试';
+    input.select();
+    return;
+  }
+  closeModal();
+  download(f);
 }
 
 /* ---------- 操作 ---------- */
@@ -418,6 +551,7 @@ function download(f) {
 }
 function copyLink(f) {
   if (!f) return;
+  if (f.lock && f.lock.hash) { toast('该文件受密码保护，请用「下载」输入密码后获取'); return; }
   var link = fileUrl(f.path);
   var done = function () { toast('链接已复制'); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -448,6 +582,7 @@ function openDetail(path) {
     '<div class="modal-head"><h3>' + esc(f.name) + '</h3>' +
     '<button class="modal-x" data-act="close" aria-label="关闭">×</button></div>' +
     (f.desc ? '<p class="modal-text">' + esc(f.desc) + '</p>' : '') +
+    (f.lock ? '<p class="modal-text"><span class="lock-tag">需密码</span> 下载前需输入管理员设置的密码。</p>' : '') +
     '<dl class="detail-grid">' +
     '<div><dt>路径</dt><dd>' + esc(f.path) + '</dd></div>' +
     '<div><dt>大小</dt><dd>' + fmtSize(f.size) + '</dd></div>' +
@@ -456,7 +591,7 @@ function openDetail(path) {
     '</dl>' +
     '<div class="modal-foot">' +
     (gh ? '<a class="btn" href="' + esc(gh) + '" target="_blank" rel="noopener">在 GitHub 查看</a>' : '') +
-    '<button class="btn" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>' +
+    (f.lock ? '' : '<button class="btn" data-act="link" data-path="' + esc(f.path) + '">复制链接</button>') +
     '<button class="btn btn-primary" data-act="dl" data-path="' + esc(f.path) + '">下载文件</button>' +
     '</div>';
   modal.hidden = false;
@@ -476,7 +611,8 @@ document.addEventListener('click', function (e) {
   var path = el.getAttribute('data-path');
   if (act === 'cat') { cat = el.getAttribute('data-cat'); render(); return; }
   if (act === 'open') { openDetail(path); return; }
-  if (act === 'dl') { download(find(path)); return; }
+  if (act === 'dl') { requestDownload(find(path)); return; }
+  if (act === 'pass-ok') { tryPass(find(path)); return; }
   if (act === 'link') { copyLink(find(path)); return; }
   if (act === 'close') { closeModal(); return; }
 });
@@ -493,6 +629,7 @@ document.addEventListener('keydown', function (e) {
 });
 
 loadManifest();
+startAutoSync();
 })();
 </script>
 </body>

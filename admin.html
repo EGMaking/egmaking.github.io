@@ -105,7 +105,7 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 .panel-head{display:flex;flex-direction:column;gap:10px;padding:15px 16px 12px;border-bottom:1px solid var(--line)}
 .panel-head h3{font-size:16px;font-weight:700;display:flex;align-items:center;gap:8px}
 .panel-head .count{font-size:12px;color:var(--ink-3);font-weight:400;font-family:var(--mono)}
-.panel-head .hint{font-size:12px;color:var(--ink-3);line-height:1.6}
+.panel-head .hint{font-size:12px;color:var(--ink-3);line-height:1.6;min-width:0;overflow-wrap:anywhere}
 @media(min-width:760px){.panel-head{flex-direction:row;align-items:center;justify-content:space-between}}
 
 /* 连接配置 */
@@ -123,6 +123,14 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 .conn-status.ok{color:var(--pine)}
 .conn-status.warn{color:var(--amber)}
 .conn-status.err{color:var(--brick)}
+.lock-tag{display:inline-block;font-family:var(--mono);font-size:10.5px;color:var(--brick);border:1px solid #E0C7BE;padding:0 4px;line-height:1.6;vertical-align:1px}
+.cfg-memo{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2);min-height:32px;cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--pine);margin:0}
+.cfg-memo .field-note{flex:1;min-width:180px;margin-top:0}
+.set-grid{display:grid;grid-template-columns:1fr;gap:14px}
+.set-grid .field{margin-top:0}
+@media(min-width:760px){.set-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* 上传 */
 .up-body{padding:16px;display:grid;gap:16px}
@@ -163,8 +171,8 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 .f-cell{display:none;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
 .f-acts{grid-column:2;display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
 @media(min-width:900px){
-  .file-head{display:grid;grid-template-columns:40px minmax(0,1fr) 84px 110px 148px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-3)}
-  .f-row{grid-template-columns:40px minmax(0,1fr) 84px 110px 148px;gap:10px;padding:11px 16px}
+  .file-head{display:grid;grid-template-columns:40px minmax(0,1fr) 84px 100px 208px;gap:10px;padding:9px 16px;border-bottom:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .f-row{grid-template-columns:40px minmax(0,1fr) 84px 100px 208px;gap:10px;padding:11px 16px}
   .f-cell{display:block}
   .f-acts{grid-column:auto;justify-content:flex-end;margin-top:0}
   .badge{width:40px;height:40px}
@@ -181,8 +189,11 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 .modal{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:16px}
 .modal-backdrop{position:absolute;inset:0;background:rgba(18,24,20,.55)}
 .modal-card{position:relative;background:var(--surface);border:1px solid var(--line-2);border-top:4px solid var(--brick);width:100%;max-width:480px;max-height:calc(100vh - 32px);overflow:auto;padding:22px}
-.modal-head h3{font-size:18px;font-weight:700;line-height:1.4}
-.modal-text{font-size:14px;color:var(--ink-2);margin-top:10px;line-height:1.75;word-break:break-all}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.modal-head h3{font-size:18px;font-weight:700;line-height:1.4;min-width:0}
+.modal-x{background:none;border:0;font-size:22px;line-height:1;color:var(--ink-3);padding:2px 6px;min-width:36px;min-height:36px;flex:none}
+.modal-x:hover{color:var(--ink)}
+.modal-text{font-size:14px;color:var(--ink-2);margin-top:10px;line-height:1.75;overflow-wrap:anywhere}
 .modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:22px;flex-wrap:wrap}
 
 .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:var(--ink);color:#F3F5F0;font-size:13.5px;padding:10px 16px;z-index:120;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:calc(100vw - 32px);text-align:center;border-radius:2px}
@@ -226,7 +237,7 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
     </div>
     <div class="gate-err" id="gateErr" role="alert"></div>
     <button class="btn btn-primary" data-act="login">进入后台</button>
-    <p class="gate-note">登录只是本页面的前端门禁；真正的写入权限由 GitHub Token 决定，没有 Token 时只能浏览与下载。</p>
+    <p class="gate-note">首次使用密码 <code>123456</code>；改过密码后以新密码为准，可在下方「管理员密码」里修改。登录只是本页面的前端门禁；真正的写入权限由 GitHub Token 决定，没有 Token 时只能浏览与下载。</p>
   </section>
 </main>
 
@@ -251,7 +262,7 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
   <section class="panel">
     <div class="panel-head">
       <h3>仓库连接</h3>
-      <span class="hint">Token 只保存在当前浏览器会话，不写入任何文件。</span>
+      <span class="hint">仓库信息与 Token 只存本机浏览器，不写入仓库。</span>
     </div>
     <div class="cfg-body">
       <div class="cfg-grid">
@@ -278,20 +289,51 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
         <button class="btn btn-ghost" data-act="sync">仅同步清单</button>
         <span class="conn-status warn" id="connStatus">未配置仓库</span>
       </div>
+      <div class="cfg-memo">
+        <span class="field-note">保存后立即写入本机 localStorage，下次打开自动带出；公共电脑用完请点右侧清除。</span>
+        <button class="mini" data-act="forget-token">清除已存 Token</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h3>管理员密码</h3>
+      <span class="hint">密码以 SHA-256 加盐哈希写入仓库根目录 vault-config.json，换设备登录也生效。</span>
+    </div>
+    <div class="cfg-body">
+      <div class="set-grid">
+        <div class="field">
+          <label for="pwdCurrent">当前密码</label>
+          <input id="pwdCurrent" type="password" autocomplete="off" placeholder="输入当前密码">
+        </div>
+        <div class="field">
+          <label for="pwdNew">新密码</label>
+          <input id="pwdNew" type="password" autocomplete="new-password" placeholder="至少 6 位">
+        </div>
+        <div class="field">
+          <label for="pwdConfirm">确认新密码</label>
+          <input id="pwdConfirm" type="password" autocomplete="new-password" placeholder="再输入一次">
+        </div>
+      </div>
+      <div class="cfg-actions">
+        <button class="btn btn-primary" data-act="change-pass">保存新密码</button>
+        <span class="field-note" id="pwdHint">正在读取密码配置…</span>
+      </div>
     </div>
   </section>
 
   <section class="panel">
     <div class="panel-head">
       <h3>上传文件 <span class="count" id="queueCount">0 个待上传</span></h3>
-      <span class="hint">提交后写入仓库 files/ 目录，并同步更新 files.json。</span>
+      <span class="hint">提交后写入仓库 files/ 目录，并同步更新 files.json。单个文件可为访客设置下载密码。</span>
     </div>
     <div class="up-body">
       <div class="drop" id="dropZone">
         <h4>拖入要发布的文件</h4>
         <p>也支持点击选择、多选。上传前请确认文件不含密钥或个人隐私。</p>
         <button class="btn" data-act="pick">选择文件</button>
-        <p class="drop-note" id="dropNote">单文件上限 20 MB</p>
+        <p class="drop-note" id="dropNote">不限大小；GitHub 单文件硬上限 100 MB，超出会被仓库拒绝</p>
         <input type="file" id="fileInput" multiple hidden>
       </div>
       <div>
@@ -311,7 +353,7 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
   <section class="panel">
     <div class="panel-head">
       <h3>文件清单 <span class="count" id="fileCount">0 个文件</span></h3>
-      <span class="hint">清单来自仓库里的 files.json。</span>
+      <span class="hint">清单来自仓库里的 files.json；可为单个文件单独设置下载密码。</span>
     </div>
     <div class="list-head">
       <button class="btn btn-ghost" data-act="sync">同步清单</button>
@@ -357,11 +399,12 @@ input,select{font-family:inherit;font-size:16px;color:var(--ink)}
 'use strict';
 
 var ADMIN_USER = 'admin';
-var ADMIN_PASS = '123456';
+var DEFAULT_PASS = '123456';
+var CONFIG_FILE = 'vault-config.json';
 var CFG_KEY = 'cxgh.repo';
 var TOKEN_KEY = 'cxgh.token';
+var PWD_KEY = 'cxgh.pwd';
 var AUTH_KEY = 'cxgh.auth';
-var MAX_BYTES = 20 * 1024 * 1024;
 
 var cfg = { owner: '', repo: '', branch: 'main' };
 var token = '';
@@ -375,6 +418,11 @@ var connState = '';
 var connError = '';
 var toastTimer = null;
 var pendingClose = null;
+var pwdSalt = '';
+var pwdHash = '';
+var pwdReady = false;
+var pwdSource = '';
+var pwdCandidates = [];
 
 var IMG_EXT = ['png','jpg','jpeg','gif','webp','svg','bmp','avif'];
 var DOC_EXT = ['pdf','doc','docx','md','markdown','txt','rtf','ppt','pptx','key','pages'];
@@ -444,7 +492,7 @@ function loadCfg() {
       cfg.branch = o.branch || 'main';
     }
   } catch (e) {}
-  try { token = sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { token = ''; }
+  try { token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY) || ''; } catch (e) { token = ''; }
   inferRepo();
 }
 function inferRepo() {
@@ -460,9 +508,14 @@ function saveCfg() {
   cfg.owner = document.getElementById('cfgOwner').value.trim();
   cfg.repo = document.getElementById('cfgRepo').value.trim();
   cfg.branch = document.getElementById('cfgBranch').value.trim() || 'main';
+  document.getElementById('cfgBranch').value = cfg.branch;
   token = document.getElementById('cfgToken').value.trim();
   try { localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); } catch (e) {}
-  try { sessionStorage.setItem(TOKEN_KEY, token); } catch (e) {}
+  try {
+    if (token) localStorage.setItem(TOKEN_KEY, token);
+    else localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+  } catch (e) {}
 }
 function fillCfg() {
   document.getElementById('cfgOwner').value = cfg.owner;
@@ -470,7 +523,191 @@ function fillCfg() {
   document.getElementById('cfgBranch').value = cfg.branch || 'main';
   document.getElementById('cfgToken').value = token;
 }
+function forgetToken() {
+  token = '';
+  try { localStorage.removeItem(TOKEN_KEY); sessionStorage.removeItem(TOKEN_KEY); } catch (e) {}
+  document.getElementById('cfgToken').value = '';
+  connState = '';
+  connError = '';
+  renderStatus();
+  toast('已清除本机保存的 Token');
+}
 function cfgReady() { return !!(cfg.owner && cfg.repo && cfg.branch); }
+
+/* ---------- 密码 ---------- */
+function sha256Hex(input) {
+  var K = [
+    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+  ];
+  var H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+  var bytes = [];
+  var str = unescape(encodeURIComponent(String(input)));
+  for (var i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i));
+  var bitLen = str.length * 8;
+  bytes.push(0x80);
+  while (bytes.length % 64 !== 56) bytes.push(0);
+  var hi = Math.floor(bitLen / 4294967296), lo = bitLen % 4294967296;
+  bytes.push((hi >>> 24) & 255, (hi >>> 16) & 255, (hi >>> 8) & 255, hi & 255);
+  bytes.push((lo >>> 24) & 255, (lo >>> 16) & 255, (lo >>> 8) & 255, lo & 255);
+  function rr(x, n) { return (x >>> n) | (x << (32 - n)); }
+  for (var off = 0; off < bytes.length; off += 64) {
+    var w = new Array(64);
+    for (i = 0; i < 16; i++) {
+      w[i] = (bytes[off + i * 4] << 24) | (bytes[off + i * 4 + 1] << 16) |
+             (bytes[off + i * 4 + 2] << 8) | bytes[off + i * 4 + 3];
+    }
+    for (i = 16; i < 64; i++) {
+      var x = w[i - 15], y = w[i - 2];
+      var s0 = rr(x, 7) ^ rr(x, 18) ^ (x >>> 3);
+      var s1 = rr(y, 17) ^ rr(y, 19) ^ (y >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) >>> 0;
+    }
+    var a = H[0], b = H[1], c = H[2], d = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var S1 = rr(e, 6) ^ rr(e, 11) ^ rr(e, 25);
+      var ch = (e & f) ^ ((~e) & g);
+      var t1 = (h + S1 + ch + K[i] + w[i]) >>> 0;
+      var S0 = rr(a, 2) ^ rr(a, 13) ^ rr(a, 22);
+      var maj = (a & b) ^ (a & c) ^ (b & c);
+      var t2 = (S0 + maj) >>> 0;
+      h = g; g = f; f = e; e = (d + t1) >>> 0;
+      d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+    }
+    H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0;
+    H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+    H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0;
+    H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+  }
+  var out = '';
+  for (i = 0; i < 8; i++) out += ('00000000' + H[i].toString(16)).slice(-8);
+  return out;
+}
+function pwdDigest(pass, salt) { return sha256Hex(salt + ':' + pass); }
+function addPwdCandidate(salt, hash) {
+  if (!hash) return;
+  var h = String(hash).toLowerCase();
+  for (var i = 0; i < pwdCandidates.length; i++) if (pwdCandidates[i].hash === h) return;
+  pwdCandidates.push({ salt: salt || '', hash: h });
+}
+function pwdMatches(pass) {
+  for (var i = 0; i < pwdCandidates.length; i++) {
+    if (pwdDigest(pass, pwdCandidates[i].salt) === pwdCandidates[i].hash) return true;
+  }
+  return false;
+}
+function randomSalt() {
+  var s = '';
+  try {
+    var buf = new Uint8Array(8);
+    crypto.getRandomValues(buf);
+    for (var i = 0; i < buf.length; i++) s += ('0' + buf[i].toString(16)).slice(-2);
+  } catch (e) {
+    s = Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+  return s || 'cxgh';
+}
+function loadPasswordConfig() {
+  var readLocal = function () {
+    try {
+      var raw = localStorage.getItem(PWD_KEY);
+      if (!raw) return null;
+      var o = JSON.parse(raw);
+      if (o && o.hash) return { salt: o.salt || '', hash: String(o.hash).toLowerCase(), updated: o.updated || '' };
+    } catch (e) {}
+    return null;
+  };
+  var readRepo = function () {
+    return fetch(CONFIG_FILE, { cache: 'no-store' }).then(function (res) {
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return res.json();
+    }).then(function (d) {
+      if (!d || !d.password || !d.password.hash) throw new Error('没有密码配置');
+      return { salt: d.password.salt || '', hash: String(d.password.hash).toLowerCase(), updated: d.updated || '' };
+    }).catch(function () { return null; });
+  };
+  var stamp = function (v) { var t = Date.parse(v || ''); return isNaN(t) ? 0 : t; };
+  return readRepo().then(function (repo) {
+    var local = readLocal();
+    var pick = repo;
+    if (local && (!repo || stamp(local.updated) > stamp(repo.updated))) pick = local;
+    if (pick) {
+      pwdSalt = pick.salt;
+      pwdHash = pick.hash;
+      pwdSource = pick === local ? 'local' : 'repo';
+      addPwdCandidate(pick.salt, pick.hash);
+    } else {
+      pwdSalt = 'cxgh-v1';
+      pwdHash = pwdDigest(DEFAULT_PASS, pwdSalt);
+      pwdSource = 'default';
+      addPwdCandidate(pwdSalt, pwdHash);
+    }
+    pwdReady = true;
+    renderPwdHint();
+  });
+}
+function renderPwdHint() {
+  var el = document.getElementById('pwdHint');
+  if (!el) return;
+  if (!pwdReady) { el.textContent = '正在读取密码配置…'; return; }
+  if (pwdSource === 'repo') {
+    el.textContent = '当前密码来自仓库 vault-config.json，所有设备共用；改动提交后约 1 分钟生效。';
+  } else if (pwdSource === 'local') {
+    el.textContent = '当前密码来自本机记录（未连接仓库，或仓库里还没有密码配置）。';
+  } else {
+    el.textContent = '当前使用默认密码 123456；保存后会写入仓库 vault-config.json。';
+  }
+}
+function changePassword() {
+  if (!pwdReady) { toast('密码配置还在读取，请稍候'); return; }
+  var cur = document.getElementById('pwdCurrent').value;
+  var n1 = document.getElementById('pwdNew').value;
+  var n2 = document.getElementById('pwdConfirm').value;
+  if (!pwdMatches(cur)) { toast('当前密码不正确'); return; }
+  if (n1.length < 6) { toast('新密码至少 6 位'); return; }
+  if (n1 !== n2) { toast('两次输入的新密码不一致'); return; }
+  if (n1 === cur) { toast('新密码与当前密码相同'); return; }
+  var salt = randomSalt();
+  var hash = pwdDigest(n1, salt);
+  var stamp = new Date().toISOString();
+  var cfgText = JSON.stringify({
+    password: { algo: 'sha256', salt: salt, hash: hash },
+    updated: stamp,
+    note: '管理员密码的加盐哈希。前端门禁不等于安全边界，写权限仍由 GitHub Token 控制。'
+  }, null, 2) + '\n';
+  try { localStorage.setItem(PWD_KEY, JSON.stringify({ salt: salt, hash: hash, updated: stamp })); } catch (e) {}
+  pwdSalt = salt;
+  pwdHash = hash;
+  pwdCandidates = [{ salt: salt, hash: hash }];
+  var done = function () {
+    pwdReady = true;
+    renderPwdHint();
+    document.getElementById('pwdCurrent').value = '';
+    document.getElementById('pwdNew').value = '';
+    document.getElementById('pwdConfirm').value = '';
+  };
+  if (!cfgReady() || !token) {
+    pwdSource = 'local';
+    done();
+    toast('新密码已保存在本机；配置仓库与 Token 后才会同步到其他设备');
+    return;
+  }
+  pwdSource = 'repo';
+  putFile(CONFIG_FILE, new TextEncoder().encode(cfgText), 'chore: 更新管理员密码').then(function () {
+    done();
+    toast('新密码已写入仓库，约 1 分钟后各设备生效');
+  }).catch(function (e) {
+    pwdSource = 'local';
+    done();
+    toast('已保存在本机，但写入仓库失败：' + e.message + '（仓库里的旧密码仍有效）');
+  });
+}
 
 /* ---------- GitHub API ---------- */
 function apiUrl(path) {
@@ -560,7 +797,8 @@ function normalize(f) {
     size: Number(f.size) || 0,
     type: f.type || '',
     updated: f.updated || '',
-    desc: f.desc || ''
+    desc: f.desc || '',
+    lock: f.lock && f.lock.hash ? { algo: f.lock.algo || 'sha256', salt: f.lock.salt || '', hash: String(f.lock.hash).toLowerCase() } : null
   };
 }
 function setFiles(list) {
@@ -588,7 +826,14 @@ function syncManifest() {
 }
 function saveManifest(message) {
   manifest.site = manifest.site || '存匣 · 文件托管';
-  manifest.files = files;
+  manifest.files = files.map(function (f) {
+    var item = {
+      name: f.name, path: f.path, size: f.size,
+      type: f.type || '', updated: f.updated || '', desc: f.desc || ''
+    };
+    if (f.lock && f.lock.hash) item.lock = f.lock;
+    return item;
+  });
   manifest.updated = new Date().toISOString();
   var text = JSON.stringify(manifest, null, 2) + '\n';
   return remoteFile('files.json').then(function (info) {
@@ -677,11 +922,13 @@ function renderFiles() {
     return '<div class="f-row">' +
       '<div class="badge" aria-hidden="true">' + esc(badgeText(f.name)) + '</div>' +
       '<div class="f-main"><span class="f-name">' + esc(f.name) + '</span>' +
-      '<span class="f-sub">' + esc(f.path) + ' · ' + CAT_LABEL[catOf(f.name)] + '</span></div>' +
+      '<span class="f-sub">' + esc(f.path) + ' · ' + CAT_LABEL[catOf(f.name)] +
+      (f.lock ? ' · <span class="lock-tag">需密码</span>' : '') + '</span></div>' +
       '<div class="f-cell">' + fmtSize(f.size) + '</div>' +
       '<div class="f-cell">' + esc(f.updated || '—') + '</div>' +
       '<div class="f-acts">' +
       '<button class="mini" data-act="download" data-path="' + esc(f.path) + '">下载</button>' +
+      '<button class="mini" data-act="lock" data-path="' + esc(f.path) + '">' + (f.lock ? '改密码' : '设密码') + '</button>' +
       '<button class="mini danger" data-act="delete" data-path="' + esc(f.path) + '">删除</button>' +
       '</div></div>';
   }).join('');
@@ -719,7 +966,8 @@ function doLogin() {
   var u = document.getElementById('loginUser').value.trim();
   var p = document.getElementById('loginPass').value;
   var err = document.getElementById('gateErr');
-  if (u === ADMIN_USER && p === ADMIN_PASS) {
+  if (!pwdReady) { err.textContent = '密码配置还在读取，请稍候再试'; return; }
+  if (u === ADMIN_USER && pwdMatches(p)) {
     authed = true;
     try { sessionStorage.setItem(AUTH_KEY, '1'); } catch (e) {}
     document.getElementById('loginPass').value = '';
@@ -772,9 +1020,8 @@ function addToQueue(fileList) {
   var arr = Array.prototype.slice.call(fileList || []);
   if (!arr.length) return;
   arr.forEach(function (f) {
-    if (f.size > MAX_BYTES) {
-      toast('「' + f.name + '」超过 20 MB，未加入队列');
-      return;
+    if (f.size > 100 * 1024 * 1024) {
+      toast('「' + f.name + '」超过 GitHub 单文件 100 MB 上限，提交会被拒绝');
     }
     queue.push({
       name: f.name, size: f.size, file: f,
@@ -860,6 +1107,66 @@ function uploadQueue() {
       toast('文件已提交，但清单更新失败：' + e.message);
     });
   });
+}
+/* ---------- 下载密码 ---------- */
+function lockDialog(f) {
+  var modal = document.getElementById('modal');
+  document.getElementById('modalCard').innerHTML =
+    '<div class="modal-head"><h3>下载密码</h3>' +
+    '<button class="modal-x" data-act="modal-close" aria-label="关闭">×</button></div>' +
+    '<p class="modal-text">为「' + esc(f.name) + '」设置访客下载密码。只保存加盐哈希，写进 files.json，不记录明文。</p>' +
+    '<div class="field" style="margin-top:14px"><label for="lockPass">下载密码</label>' +
+    '<input id="lockPass" type="password" autocomplete="new-password" placeholder="至少 6 位"></div>' +
+    '<p class="gate-err" id="lockErr"></p>' +
+    '<div class="modal-foot">' +
+    '<button class="btn btn-ghost" data-act="modal-close">取消</button>' +
+    (f.lock ? '<button class="btn btn-ghost" data-act="lock-clear" data-path="' + esc(f.path) + '">取消保护</button>' : '') +
+    '<button class="btn btn-primary" data-act="lock-save" data-path="' + esc(f.path) + '">保存</button>' +
+    '</div>' +
+    '<p class="field-note" style="margin-top:12px">纯静态站只能做界面门禁：知道 files/ 直链的人仍可直接打开文件，密码挡的是正常访客。</p>';
+  modal.hidden = false;
+  document.body.style.overflow = 'hidden';
+  var input = document.getElementById('lockPass');
+  if (f.lock) input.placeholder = '输入新密码；留空则取消保护';
+  setTimeout(function () { input.focus(); }, 60);
+  input.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); saveLock(f.path, input.value.trim()); }
+  });
+}
+function saveLock(path, pass) {
+  if (!ensureWritable()) return;
+  var f = files.filter(function (x) { return x.path === path; })[0];
+  if (!f) return;
+  if (pass && pass.length < 6) {
+    var err = document.getElementById('lockErr');
+    if (err) err.textContent = '下载密码至少 6 位';
+    return;
+  }
+  var prev = f.lock;
+  f.lock = pass ? { algo: 'sha256', salt: randomSalt(), hash: '' } : null;
+  if (f.lock) f.lock.hash = pwdDigest(pass, f.lock.salt);
+  closeModal();
+  saveManifest('chore: ' + (pass ? '为 ' + f.name + ' 设置下载密码' : '取消 ' + f.name + ' 的下载密码'))
+    .then(function () { return remoteFile('files.json'); })
+    .then(function (info) {
+      if (info) {
+        try { manifest = JSON.parse(info.text); setFiles(manifest.files || []); } catch (e) {}
+      }
+      lastSync = nowStamp();
+      renderAll();
+      toast(pass ? '已为「' + f.name + '」设置下载密码' : '已取消「' + f.name + '」的下载密码');
+    })
+    .catch(function (e) {
+      f.lock = prev;
+      renderAll();
+      toast('下载密码保存失败：' + e.message);
+    });
+}
+function clearLock(path) {
+  var f = files.filter(function (x) { return x.path === path; })[0];
+  if (!f) return;
+  if (!f.lock) { closeModal(); return; }
+  saveLock(path, '');
 }
 function confirmDialog(title, text, okText) {
   return new Promise(function (resolve) {
@@ -1003,6 +1310,13 @@ function bind() {
     addToQueue(e.target.files);
     e.target.value = '';
   });
+  ['cfgOwner', 'cfgRepo', 'cfgBranch', 'cfgToken'].forEach(function (id) {
+    document.getElementById(id).addEventListener('change', function () {
+      saveCfg();
+      renderStatus();
+      renderNotice();
+    });
+  });
   document.getElementById('loginPass').addEventListener('keydown', function (e) {
     if (e.key === 'Enter') { e.preventDefault(); doLogin(); }
   });
@@ -1029,7 +1343,16 @@ function bind() {
         renderQueue(); renderStats(); break;
       case 'sync': syncOnly(); break;
       case 'connect': connect(); break;
+      case 'change-pass': changePassword(); break;
+      case 'forget-token': forgetToken(); break;
       case 'delete': deleteFile(path); break;
+      case 'lock': {
+        var lf = files.filter(function (x) { return x.path === path; })[0];
+        if (lf) lockDialog(lf);
+        break;
+      }
+      case 'lock-save': saveLock(path, (document.getElementById('lockPass') || {}).value || ''); break;
+      case 'lock-clear': clearLock(path); break;
       case 'download': downloadFile(path); break;
       case 'open-index': window.open('index.html', '_blank', 'noopener'); break;
       case 'modal-close': closeModal(); break;
@@ -1040,14 +1363,16 @@ function bind() {
 loadCfg();
 bind();
 fillCfg();
-if (authed) {
-  showPanel();
-  renderAll();
-  bootFiles();
-} else {
-  showGate();
-  renderAll();
-}
+loadPasswordConfig().then(function () {
+  if (authed) {
+    showPanel();
+    renderAll();
+    bootFiles();
+  } else {
+    showGate();
+    renderAll();
+  }
+});
 })();
 </script>
 </body>
