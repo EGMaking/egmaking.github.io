@@ -1,6 +1,6 @@
 {
   "site": "存匣 · 文件托管",
-  "updated": "2026-11-06T01:30:36.720Z",
+  "updated": "2026-11-06T01:30:51.544Z",
   "files": [
     {
       "name": "仓库使用说明.md",
@@ -32,7 +32,12 @@
       "size": 1663506,
       "type": "exe",
       "updated": "2026-11-06",
-      "desc": ""
+      "desc": "",
+      "lock": {
+        "algo": "sha256",
+        "salt": "3f316f42fc809a80",
+        "hash": "b318ddad16948c5f9f255d0d4bf7b4a33da3cdb4d431b299191588471ee675db"
+      }
     }
   ]
 }
