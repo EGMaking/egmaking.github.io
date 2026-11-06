@@ -1,9 +1,9 @@
 {
   "password": {
     "algo": "sha256",
-    "salt": "cxgh-v1",
-    "hash": "48f8b889b7cd61fd5f149309bca9d84fc5f24fe44b6b557dfc3bedc8c308767d"
+    "salt": "4be36cae326ece82",
+    "hash": "b6daf1db273d0be3dac21773d1b5e173d869c0ffbf56bd5e62562b911b8febb7"
   },
-  "updated": "2026-11-06T08:00:00+08:00",
+  "updated": "2026-11-06T01:21:11.390Z",
   "note": "管理员密码的加盐哈希。前端门禁不等于安全边界，写权限仍由 GitHub Token 控制。"
 }
