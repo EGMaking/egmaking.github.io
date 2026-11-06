@@ -1,6 +1,6 @@
 {
   "site": "存匣 · 文件托管",
-  "updated": "2026-11-06T07:48:01+08:00",
+  "updated": "2026-11-06T00:19:46.330Z",
   "files": [
     {
       "name": "仓库使用说明.md",
@@ -25,6 +25,14 @@
       "type": "text",
       "updated": "2026-10-28",
       "desc": "站点配色、字重与编号字体的取样记录。"
+    },
+    {
+      "name": "favicon.ico",
+      "path": "files/favicon.ico",
+      "size": 141402,
+      "type": "ico",
+      "updated": "2026-11-06",
+      "desc": ""
     }
   ]
 }
